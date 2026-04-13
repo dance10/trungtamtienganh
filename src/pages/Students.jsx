@@ -139,7 +139,9 @@ export default function Students() {
     try {
       const res = await executeApi('getCoursesAndClasses');
       setClasses(res.data?.classes || []);
-    } catch (e) {}
+    } catch (error) {
+      console.error('Lỗi tải danh sách lớp:', error);
+    }
   };
 
   const handleDelete = async (student) => {

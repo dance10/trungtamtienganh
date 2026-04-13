@@ -23,8 +23,8 @@ export const executeApi = async (action, payload = {}) => {
     let result;
     try {
       result = JSON.parse(text);
-    } catch (e) {
-      console.error("Lỗi parse JSON từ Google:", text);
+    } catch (error) {
+      console.error("Lỗi parse JSON từ Google:", text, error);
       throw new Error("Phản hồi từ máy chủ không hợp lệ");
     }
 

@@ -16,6 +16,7 @@ function AttendanceModal({ isOpen, onClose, classInfo }) {
     if (isOpen && classInfo) {
       loadAttendanceData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, classInfo]);
 
   const loadAttendanceData = async () => {
@@ -79,7 +80,9 @@ function AttendanceModal({ isOpen, onClose, classInfo }) {
         existing[a.studentId] = { status: a.status, note: a.note || '' };
       });
       setAttendanceRecords(existing);
-    } catch (e) {}
+    } catch (error) {
+      console.error('Lỗi load điểm danh theo session:', error);
+    }
   };
 
   const toggleStatus = (studentId) => {
@@ -231,7 +234,9 @@ export default function Classes() {
     try {
       const res = await executeApi('getCoursesAndClasses');
       setClasses(res.data?.classes || []);
-    } catch (e) {} finally { setLoading(false); }
+    } catch (error) {
+      console.error('Lỗi fetch danh sách lớp:', error);
+    } finally { setLoading(false); }
   };
 
   const filtered = classes.filter(c => {
