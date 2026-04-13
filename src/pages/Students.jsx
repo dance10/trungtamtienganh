@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { executeApi } from '../api';
-import { Search, Plus, Filter, MoreVertical, Loader2, X, UserPlus, Pencil, Trash2 } from 'lucide-react';
+import { Search, Plus, Filter, MoreVertical, Loader2, X, UserPlus, Pencil, Trash2, Wallet, Eye } from 'lucide-react';
 
 // ===== MODAL THÊM/SỬA HỌC VIÊN =====
 function StudentModal({ isOpen, onClose, onSaved, student, classes }) {
@@ -109,6 +109,106 @@ function StudentModal({ isOpen, onClose, onSaved, student, classes }) {
   );
 }
 
+// ===== MODAL CHI TIẾT & CÔNG NỢ =====
+function StudentDetailModal({ isOpen, onClose, student }) {
+  const [debts, setDebts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen && student) {
+      setLoading(true);
+      executeApi('getStudentComputedDebt', { studentId: student.id })
+        .then(res => {
+          if (res.success) {
+            setDebts(res.data || []);
+          } else {
+            console.error(res.error);
+            setDebts([]);
+          }
+        })
+        .catch(err => console.error(err))
+        .finally(() => setLoading(false));
+    }
+  }, [isOpen, student]);
+
+  if (!isOpen || !student) return null;
+
+  const totalDebt = debts.reduce((sum, d) => sum + d.remainingAmount, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-blue-50">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Eye size={20} className="text-indigo-600" />
+              Chi Tiết Học Viên
+            </h2>
+            <p className="text-sm font-medium text-slate-600 mt-1">{student.name} - {student.id}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/60 rounded-full transition-colors cursor-pointer"><X size={20} /></button>
+        </div>
+        
+        <div className="overflow-y-auto flex-1 p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div><span className="text-slate-500 block mb-1">Phụ huynh:</span><strong className="text-slate-700">{student.parentName || '-'}</strong></div>
+            <div><span className="text-slate-500 block mb-1">Điện thoại:</span><strong className="text-slate-700">{student.phone || '-'}</strong></div>
+            <div><span className="text-slate-500 block mb-1">Cơ sở:</span><strong className="text-slate-700">{student.location || '-'}</strong></div>
+            <div><span className="text-slate-500 block mb-1">Trạng thái:</span><strong className="text-emerald-600">{student.status || 'Đang học'}</strong></div>
+          </div>
+
+          <div>
+            <div className="flex justify-between items-end mb-3">
+              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <Wallet size={18} className="text-rose-500" />
+                Công Nợ Học Phí
+              </h3>
+              {loading ? <Loader2 size={16} className="animate-spin text-blue-500" /> : (
+                <span className={`text-sm font-bold ${totalDebt > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                  Tổng Nợ: {totalDebt.toLocaleString()}đ
+                </span>
+              )}
+            </div>
+
+            {loading ? (
+              <div className="h-24 flex items-center justify-center bg-slate-50 rounded-xl border border-slate-100 border-dashed">
+                <span className="text-sm text-slate-500">Đang tải biểu phí...</span>
+              </div>
+            ) : debts.length === 0 ? (
+              <div className="h-24 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 font-medium text-sm">
+                Không có công nợ nào.
+              </div>
+            ) : (
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
+                    <tr>
+                      <th className="px-4 py-2.5 font-semibold">Ngày ĐK</th>
+                      <th className="px-4 py-2.5 font-semibold">Khoản Phí</th>
+                      <th className="px-4 py-2.5 font-semibold text-right">Phải Đóng</th>
+                      <th className="px-4 py-2.5 font-semibold text-right">Còn Nợ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {debts.map((d, i) => (
+                      <tr key={i} className="hover:bg-slate-50/50">
+                        <td className="px-4 py-3 text-slate-500">{new Date(d.date).toLocaleDateString('vi-VN')}</td>
+                        <td className="px-4 py-3 font-medium text-slate-700">{d.feeName}</td>
+                        <td className="px-4 py-3 text-right text-slate-600">{d.originalAmount.toLocaleString()}đ</td>
+                        <td className="px-4 py-3 text-right font-bold text-rose-600">{d.remainingAmount.toLocaleString()}đ</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ===== TRANG CHÍNH =====
 export default function Students() {
   const [students, setStudents] = useState([]);
@@ -116,7 +216,9 @@ export default function Students() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [viewingStudent, setViewingStudent] = useState(null);
 
   useEffect(() => {
     fetchStudents();
@@ -222,6 +324,7 @@ export default function Students() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                        <button onClick={() => { setViewingStudent(student); setDetailModalOpen(true); }} className="p-2 text-indigo-500 hover:bg-indigo-100 rounded-full cursor-pointer" title="Xem chi tiết"><Eye size={16} /></button>
                         <button onClick={() => { setEditingStudent(student); setModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-100 rounded-full cursor-pointer" title="Sửa"><Pencil size={16} /></button>
                         <button onClick={() => handleDelete(student)} className="p-2 text-rose-500 hover:bg-rose-100 rounded-full cursor-pointer" title="Xóa"><Trash2 size={16} /></button>
                       </div>
@@ -238,6 +341,7 @@ export default function Students() {
       </div>
 
       <StudentModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSaved={fetchStudents} student={editingStudent} classes={classes} />
+      <StudentDetailModal isOpen={detailModalOpen} onClose={() => setDetailModalOpen(false)} student={viewingStudent} />
     </div>
   );
 }

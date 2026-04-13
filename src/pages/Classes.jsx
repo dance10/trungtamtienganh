@@ -220,12 +220,108 @@ function AttendanceModal({ isOpen, onClose, classInfo }) {
   );
 }
 
+// ===== MODAL MỞ LỚP MỚI =====
+function ClassModal({ isOpen, onClose, onSaved }) {
+  const [form, setForm] = useState({ 
+    name: '', courseDisplayName: '', location: '', teacherName: '',
+    classType: 'Theo Khóa', status: 'Sắp khai giảng', startDate: ''
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setForm({ 
+      name: '', courseDisplayName: '', location: '', teacherName: '',
+      classType: 'Theo Khóa', status: 'Sắp khai giảng', startDate: ''
+    });
+  }, [isOpen]);
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return alert('Vui lòng nhập tên lớp');
+    setSaving(true);
+    try {
+      const res = await executeApi('addClass', {
+        name: form.name,
+        courseId: 'KHOA_MOI', // Tạm định danh
+        teacherId: form.teacherName || 'GV Nội Bộ',
+        location: form.location,
+        classType: form.classType,
+        status: form.status,
+        startTime: '18:00', endTime: '20:00',
+        startDate: form.startDate || new Date().toISOString().slice(0, 10),
+        weekdays: 'T2;T4;T6',
+      });
+      if (res.success) {
+        onSaved();
+        onClose();
+      } else {
+        alert(res.error || 'Lỗi khi mở lớp');
+      }
+    } catch (e) { alert('Lỗi: ' + e.message); }
+    finally { setSaving(false); }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <Plus size={20} className="text-blue-600" /> Mở Lớp Học Mới
+          </h2>
+          <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full cursor-pointer"><X size={20} /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Tên Lớp (Mã Lớp) <span className="text-rose-500">*</span></label>
+            <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="VD: IELTS-A1" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium uppercase" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Cơ sở</label>
+              <input type="text" value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="Cơ sở 1" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Ngày khai giảng</label>
+              <input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Kiểu Lớp</label>
+              <select value={form.classType} onChange={e => setForm({...form, classType: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option>Theo Khóa</option>
+                <option>Theo Tháng</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Trạng thái</label>
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option>Sắp khai giảng</option>
+                <option>Khóa chính thức</option>
+                <option>Đang hoạt động</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">Hủy</button>
+          <button onClick={handleSave} disabled={saving} className="px-5 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center gap-2 cursor-pointer shadow-sm">
+            {saving ? <><Loader2 size={16} className="animate-spin" /> Lưu...</> : 'Tạo Lớp'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ===== TRANG CHÍNH =====
 export default function Classes() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [attendanceClass, setAttendanceClass] = useState(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   useEffect(() => { fetchClasses(); }, []);
 
@@ -258,7 +354,7 @@ export default function Classes() {
           <h1 className="text-2xl font-bold text-slate-800">Đào tạo & Lớp học</h1>
           <p className="text-sm text-slate-500 mt-1">Quản lý lớp học, lịch học và điểm danh</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm cursor-pointer">
+        <button onClick={() => setCreateModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm cursor-pointer">
           <Plus size={18} /> Mở Lớp mới
         </button>
       </div>
@@ -297,7 +393,7 @@ export default function Classes() {
                 <button onClick={() => setAttendanceClass(cls)} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
                   <Check size={16} /> Điểm danh
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+                <button onClick={() => alert(`Đang xây dựng: Xuất báo cáo điểm danh, học vụ cho lớp ${cls.name || cls.id}`)} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
                   <BookOpen size={16} /> Báo cáo
                 </button>
               </div>
@@ -307,6 +403,7 @@ export default function Classes() {
       )}
 
       <AttendanceModal isOpen={!!attendanceClass} onClose={() => setAttendanceClass(null)} classInfo={attendanceClass} />
+      <ClassModal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} onSaved={fetchClasses} />
     </div>
   );
 }
