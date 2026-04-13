@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #f8fafc; /* bg-slate-50 */
+    color: #1e293b; /* text-slate-800 */
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
