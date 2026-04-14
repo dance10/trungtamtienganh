@@ -182,10 +182,10 @@ export default function Finance() {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return (
-      (t.content || '').toLowerCase().includes(term) ||
-      (t.studentId || '').toLowerCase().includes(term) ||
-      (t.collector || '').toLowerCase().includes(term) ||
-      (t.id || '').toLowerCase().includes(term)
+      String(t.content || '').toLowerCase().includes(term) ||
+      String(t.studentId || '').toLowerCase().includes(term) ||
+      String(t.collector || '').toLowerCase().includes(term) ||
+      String(t.id || '').toLowerCase().includes(term)
     );
   });
 

@@ -29,9 +29,9 @@ const Teachers = () => {
   };
 
   const filteredTeachers = teachers.filter(t => 
-    t.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.phone?.includes(searchTerm)
+    String(t.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    String(t.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(t.phone || '').includes(searchTerm)
   );
 
   return (

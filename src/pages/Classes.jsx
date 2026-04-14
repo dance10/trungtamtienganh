@@ -338,7 +338,7 @@ export default function Classes() {
   const filtered = classes.filter(c => {
     if (!search) return true;
     const term = search.toLowerCase();
-    return (c.courseDisplayName || '').toLowerCase().includes(term) || (c.name || '').toLowerCase().includes(term) || (c.id || '').toLowerCase().includes(term);
+    return String(c.courseDisplayName || '').toLowerCase().includes(term) || String(c.name || '').toLowerCase().includes(term) || String(c.id || '').toLowerCase().includes(term);
   });
 
   const statusColor = (status) => {

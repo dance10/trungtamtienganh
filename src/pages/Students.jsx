@@ -260,7 +260,7 @@ export default function Students() {
   const filteredStudents = students.filter(s => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
-    return (s.name || '').toLowerCase().includes(term) || (s.phone || '').includes(term) || (s.parentName || '').toLowerCase().includes(term) || (s.id || '').toLowerCase().includes(term);
+    return String(s.name || '').toLowerCase().includes(term) || String(s.phone || '').includes(term) || String(s.parentName || '').toLowerCase().includes(term) || String(s.id || '').toLowerCase().includes(term);
   });
 
   const statusBadge = (status) => {
