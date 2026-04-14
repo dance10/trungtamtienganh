@@ -10,13 +10,21 @@ export const executeApi = async (action, payload = {}) => {
   try {
     console.log(`[API Calling] 👉 Action: ${action}`, payload);
     
+    // Lấy token từ localStorage (nếu có)
+    const token = localStorage.getItem('edu_token');
+    
+    const requestBody = { action, payload };
+    if (token) {
+      requestBody.token = token;
+    }
+
     // Phải gửi dưới dạng text/plain để tránh rắc rối với CORS Preflight của Google
     const response = await fetch(SCRIPT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "text/plain;charset=utf-8",
       },
-      body: JSON.stringify({ action, payload }),
+      body: JSON.stringify(requestBody),
     });
 
     const text = await response.text();
@@ -26,6 +34,14 @@ export const executeApi = async (action, payload = {}) => {
     } catch (error) {
       console.error("Lỗi parse JSON từ Google:", text, error);
       throw new Error("Phản hồi từ máy chủ không hợp lệ");
+    }
+
+    // Nếu trả về Unauthorized, có nghĩa là token hết hạn hoặc không hợp lệ -> Xóa localStorage & redirect
+    if (result.error === "Unauthorized") {
+      localStorage.removeItem('edu_token');
+      localStorage.removeItem('edu_user');
+      window.dispatchEvent(new Event('unauthorized'));
+      throw new Error("Phiên đăng nhập hết hạn.");
     }
 
     if (!result.success) {
